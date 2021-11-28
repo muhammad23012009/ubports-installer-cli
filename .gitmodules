@@ -1,0 +1,3 @@
+[submodule "installer-configs"]
+	path = installer-configs
+	url = https://github.com/ubports/installer-configs.git

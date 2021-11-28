@@ -9,28 +9,41 @@ reset_color() {
 RED="$(printf '\033[31m')"  GREEN="$(printf '\033[32m')"  ORANGE="$(printf '\033[33m')"  BLUE="$(printf '\033[34m')" ENDCOLOR="\e[0m" ENDBOLDCOLOR="$(printf '\033[1m')"
 MAGENTA="$(printf '\033[35m')"  CYAN="$(printf '\033[36m')"  WHITE="$(printf '\033[37m')" BLACK="$(printf '\033[30m')" NC='\033[0m' # No Color
 ########################################################
-. configs/"$DEVICE".conf
+# . configs/"$DEVICE".conf
 
-if [ "$1" == "" ]; then
+if [ -z $DEVICE ]; then
+    DEVICE=$(adb shell getprop ro.product.vendor.name | tr -d '\r')
+fi
+
+if [ "$DEVICE" == "" ]; then
 echo "ERROR: No device defined!"
 exit 1
 fi
 
 setup_dependency() {
+sudo apt install yq
 sudo apt install jq
 sudo apt install fastboot
 }
 
-echo $DEVICEINFO
-echo ${BLUE}***********************************************
-echo ${RED}${ENDBOLDCOLOR}"$WARNING1"
-echo ${BLUE}***********************************************
-echo ${RED}${ENDBOLDCOLOR}"$WARNING2"
-echo ${BLUE}***********************************************
-echo ${RED}${ENDBOLDCOLOR}"$WARNING3"
+CONFIG="$(pwd)/installer-configs/v2/devices/${DEVICE}.yml"
+DEVICEINFO=$(cat $CONFIG | yq -r .name)
+
+echo Installing on $DEVICEINFO
+
+for name in $(cat $CONFIG | yq .unlock[]); do
+    ACTION=$(cat $CONFIG | yq -r .user_actions[$name])
+    DESCRIPTION=$(echo $ACTION | yq -r .description)
+    LINK=$(echo $ACTION | yq -r '.link // ""')
+    echo ${BLUE}***********************************************
+    echo ${RED}${ENDBOLDCOLOR}${DESCRIPTION}
+    [ ! -z $LINK ] && echo $LINK
+done
 echo -e ${BLUE}***********************************************${NC}
 
 reset_color
+
+exit 1
 
 echo "Do you wish to continue?"
 select yn in "Yes" "No"; do
