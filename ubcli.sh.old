@@ -1,0 +1,30 @@
+#!/bin/bash
+DEVICE=$1
+. configs/$DEVICE.conf
+
+if [ -d $1 ]; then
+echo "ERROR: No device defined!"
+fi
+
+if [ -d $IMAGE ]; then
+wget $DOWNLOAD
+unzip $FILE
+fi
+
+if [ -d /usr/bin/fastboot ]; then
+sudo apt install fastboot
+fi
+
+echo $DEVICEINFO
+echo $WARNING1
+echo $WARNING2
+echo $WARNING3
+
+echo "Do you wish to continue?"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) $INSTALLER; break;;
+        No ) echo "go throw phone in volcano"; exit;;
+    esac
+done
+
