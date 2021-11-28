@@ -11,7 +11,7 @@ MAGENTA="$(printf '\033[35m')"  CYAN="$(printf '\033[36m')"  WHITE="$(printf '\0
 ########################################################
 . configs/"$DEVICE".conf
 
-if [ ! -e "$1" ]; then
+if [ "$1" == "" ]; then
 echo "ERROR: No device defined!"
 exit 1
 fi
