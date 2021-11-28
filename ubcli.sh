@@ -11,14 +11,14 @@ MAGENTA="$(printf '\033[35m')"  CYAN="$(printf '\033[36m')"  WHITE="$(printf '\0
 ########################################################
 . configs/"$DEVICE".conf
 
-if [ -d "$1" ]; then
+if [ ! -e "$1" ]; then
 echo "ERROR: No device defined!"
+exit 1
 fi
 
-setup_fastboot() {
-if [ -d /usr/bin/fastboot ]; then
+setup_dependency() {
+sudo apt install jq
 sudo apt install fastboot
-fi
 }
 
 echo $DEVICEINFO
@@ -45,7 +45,7 @@ reset_color
 echo we far
 
 # Pull dependency
-setup_fastboot
+setup_dependency
 
 fetch_prepare_ota() {
 URL='https://system-image.ubports.com'
