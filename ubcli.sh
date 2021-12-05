@@ -27,14 +27,18 @@ sudo apt install fastboot
 }
 
 CONFIG="$(pwd)/installer-configs/v2/devices/${DEVICE}.yml"
-DEVICEINFO=$(cat $CONFIG | yq -r .name)
+CFG=$(yq eval -o json $CONFIG 2>/dev/null)
+if [ $? -ne 0 ]; then
+    CFG=$(yq . $CONFIG 2>/dev/null)
+fi
+DEVICEINFO=$(echo $CFG | jq -r .name)
 
 echo Installing on $DEVICEINFO
 
-for name in $(cat $CONFIG | yq .unlock[]); do
-    ACTION=$(cat $CONFIG | yq -r .user_actions[$name])
-    DESCRIPTION=$(echo $ACTION | yq -r .description)
-    LINK=$(echo $ACTION | yq -r '.link // ""')
+for name in $(echo $CFG | jq .unlock[]); do
+    ACTION=$(echo $CFG | jq -r .user_actions[$name])
+    DESCRIPTION=$(echo $ACTION | jq -r .description)
+    LINK=$(echo $ACTION | jq -r '.link // ""')
     echo ${BLUE}***********************************************
     echo ${RED}${ENDBOLDCOLOR}${DESCRIPTION}
     [ ! -z $LINK ] && echo $LINK
