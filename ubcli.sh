@@ -1,6 +1,16 @@
 #!/bin/bash
-export DEVICE=$1
 export TOPDIR=$(pwd)
+help()
+{
+   # Display help
+   echo "The UBCLI script allows for flashing devices from the terminal"
+   echo
+   echo "Syntax: ubcli.sh [-c|-h|-d]"
+   echo "options:"
+   echo "-c	Used to select a channel to install to the device."
+   echo "-d 	Used to specify a device. If no device is specificed the tool will try to automatically detect a device."
+   echo "-h	Display this message."
+}
 ########################################################
 # Colors
 reset_color() {
@@ -9,22 +19,38 @@ reset_color() {
 RED="$(printf '\033[31m')"  GREEN="$(printf '\033[32m')"  ORANGE="$(printf '\033[33m')"  BLUE="$(printf '\033[34m')" ENDCOLOR="\e[0m" ENDBOLDCOLOR="$(printf '\033[1m')"
 MAGENTA="$(printf '\033[35m')"  CYAN="$(printf '\033[36m')"  WHITE="$(printf '\033[37m')" BLACK="$(printf '\033[30m')" NC='\033[0m' # No Color
 ########################################################
-# . configs/"$DEVICE".conf
 
+setup_dependency() {
+[ ! -x /usr/bin/yq ] && sudo apt install yq || :
+[ ! -x /usr/bin/jq ] && sudo apt install jq || :
+[ ! -x /usr/bin/fastboot ] && sudo apt install fastboot || :
+[ ! -x /usr/bin/adb ] && sudo apt install adb || :
+}
+
+while getopts ":hc::d:" option; do
+   case $option in
+      h) help
+	 exit;;
+      c) # Add channel
+         CHANNEL=$OPTARG;;
+      d) # device selector
+	 DEVICE=$OPTARG;;
+     \?) echo "ERROR: Invalid option!"
+	 exit;;
+   esac
+done
+
+# Device selector
 if [ -z $DEVICE ]; then
     DEVICE=$(adb shell getprop ro.product.vendor.name | tr -d '\r')
 fi
-
+#########################
+# Exit if no device found
 if [ "$DEVICE" == "" ]; then
-echo "ERROR: No device defined!"
+echo "ERROR: No device found or defined!"
 exit 1
 fi
 
-setup_dependency() {
-sudo apt install yq
-sudo apt install jq
-sudo apt install fastboot
-}
 
 CONFIG="$(pwd)/installer-configs/v2/devices/${DEVICE}.yml"
 CFG=$(yq eval -o json $CONFIG 2>/dev/null)
@@ -47,7 +73,7 @@ echo -e ${BLUE}***********************************************${NC}
 
 reset_color
 
-exit 1
+:
 
 echo "Do you wish to continue?"
 select yn in "Yes" "No"; do
@@ -57,14 +83,9 @@ select yn in "Yes" "No"; do
     esac
 done
 
-reset_color
-
-echo we far
-
 # Pull dependency
 setup_dependency
 
-fetch_prepare_ota() {
 URL='https://system-image.ubports.com'
 
 OUTPUT="${TOPDIR}/output"
@@ -105,9 +126,8 @@ done
 
 # End ubuntu_command
 echo 'unmount system' >> "$OUTPUT/ubuntu_command"
-}
+# Start installation on device end
+adb push ${TOPDIR}/* /cache/recovery/*
+adb reboot recovery
 
-fetch_prepare_ota
-#download_bootimg
-#download_recovery
-#download_vbmeta
+echo ${GREEN}"Installation complete! You can safely unplug your device now"
