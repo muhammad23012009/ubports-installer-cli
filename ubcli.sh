@@ -119,7 +119,6 @@ for link in $(echo $CFG | jq -r '.operating_systems[0].steps[0].actions[0]["core
 done
 fi
 
-closed() {
 URL='https://system-image.ubports.com'
 
 OUTPUT="${TOPDIR}/output"
@@ -171,7 +170,7 @@ done
 # End ubuntu_command
 echo 'unmount system' >> "$OUTPUT/ubuntu_command"
 # Start installation on device end
-adb push ${TOPDIR}/* /cache/recovery/*
+adb push $OUTPUT/* /cache/recovery/*
 adb reboot recovery
-}
+
 echo ${GREEN}"Installation complete! You can safely unplug your device now."
