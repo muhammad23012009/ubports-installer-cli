@@ -124,7 +124,7 @@ download_file_and_asc() {
 latest_image=$(wget -qO- "${URL}/${CHANNEL}/${DEVICE}/index.json" | jq '.images |  map(select(.type == "full")) | sort_by(.version) | .[-1]')
 
 # Gets a list of files to download
-files=$(echo "${latest_image}" | jq --raw-output '.files[].path')
+files=$(echo "${latest_image}" | jq -r '.files[].path')
 
 # Downloads master and signing keyrings
 download_file_and_asc "${URL}/gpg/image-signing.tar.xz" "$OUTPUT"
