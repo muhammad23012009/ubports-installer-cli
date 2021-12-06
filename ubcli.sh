@@ -33,7 +33,9 @@ MAGENTA="$(printf '\033[35m')"  CYAN="$(printf '\033[36m')"  WHITE="$(printf '\0
 echo -e ${GREEN}${ENDBOLDCOLOR}"Welcome to UBCLI! A tool to install Ubuntu Touch on your device from the command-line!"${NC}
 
 setup_dependency() {
-[ ! -x /usr/bin/yq ] && sudo wget https://github.com/mikefarah/yq/releases/download/v4.16.1/yq_linux_$ARCH -O /usr/bin/yq; sudo chmod 777 /usr/bin/yq || :
+if [ ! -x /usr/bin/yq ]; then
+sudo wget https://github.com/mikefarah/yq/releases/download/v4.16.1/yq_linux_$ARCH && sudo chmod 777 /usr/bin/yq
+fi
 [ ! -x /usr/bin/jq ] && sudo apt install jq || :
 [ ! -x /usr/bin/fastboot ] && sudo apt install fastboot || :
 [ ! -x /usr/bin/adb ] && sudo apt install adb || :
@@ -49,13 +51,13 @@ while getopts ":hc::d::w:b:-:" OPT; do
       h | help) help
 	 exit;;
       c | channel) # Add channel
-         needs_arg; CHANNEL=$OPTARG;;
+         CHANNEL=$OPTARG;;
       d | device) # device selector
-	 needs_arg; DEVICE=$OPTARG;;
+	 DEVICE=$OPTARG;;
       w | wipe) # Wipe data partition
-	 needs_arg; WIPE=true;;
+	 WIPE=true;;
       b | bootstrap) # Bootstrap device
-	 needs_arg; BOOTSTRAP=true;;
+	 BOOTSTRAP=true;;
      \?) echo "ERROR: Invalid option!"
 	 help
 	 exit;;
@@ -109,6 +111,15 @@ done
 # Pull dependency
 setup_dependency
 
+if [ "$BOOTSTRAP" == "true" ]; then
+rm -rf $TOPDIR/bootstrap
+mkdir $TOPDIR/bootstrap
+for link in $(echo $CFG | jq -r '.operating_systems[0].steps[0].actions[0]["core:download"].files[] | .url'); do
+   wget $link -O $TOPDIR/bootstrap/*
+done
+fi
+
+closed() {
 URL='https://system-image.ubports.com'
 
 OUTPUT="${TOPDIR}/output"
@@ -162,5 +173,5 @@ echo 'unmount system' >> "$OUTPUT/ubuntu_command"
 # Start installation on device end
 adb push ${TOPDIR}/* /cache/recovery/*
 adb reboot recovery
-
+}
 echo ${GREEN}"Installation complete! You can safely unplug your device now."
