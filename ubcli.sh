@@ -1,9 +1,9 @@
 #!/bin/bash
 export TOPDIR=$(pwd)
 # Architecture detection for yq binary
-if [ $(uname -m) == "x86_64" ]; then
+if [ "$(uname -m)" == "x86_64" ]; then
 export ARCH=amd64
-elif [ $(uname -m) == "i686" ]; then
+elif [ "$(uname -m)" == "i686" ]; then
 export ARCH=386
 fi
 #####################################
@@ -12,12 +12,13 @@ help()
    # Display help
    echo "The UBCLI script allows for flashing devices from the terminal"
    echo
-   echo "Syntax: ubcli.sh [-c|-h|-d|-w]"
+   echo "Syntax: ubcli.sh [-c|-h|-d|-w|-b]"
    echo "options:"
-   echo "-c	Used to select a channel to install to the device."
-   echo "-d 	Used to specify a device. If no device is specificed the tool will try to automatically detect a device."
-   echo "-w 	Used to wipe the data partition of the device. Used when installing UT for the first time or wiping your user data"
-   echo "-h	Display this message."
+   echo "   -c | --channel         Used to select a channel to install to the device."
+   echo "   -d | --device          Used to specify a device. If no device is specificed the tool will try to automatically detect a device."
+   echo "   -w | --wipe            Used to wipe the data partition of the device. Used when installing UT for the first time or wiping your user data"
+   echo "   -b | --bootstrap       Used to install UT to a device for the first time. If you've installed UT already then don't enable this option"
+   echo "   -h | --help            Display this message."
 }
 ########################################################
 # Colors
@@ -38,20 +39,29 @@ setup_dependency() {
 [ ! -x /usr/bin/adb ] && sudo apt install adb || :
 }
 
-while getopts ":hc::d::w" option; do
-   case $option in
-      h) help
+while getopts ":hc::d::w:b:-:" OPT; do
+  if [ "$OPT" = "-" ]; then
+     OPT="${OPTARG%%=*}"
+     OPTARG="${OPTARG#$OPT}"
+     OPTARG="${OPTARG#=}"
+  fi
+   case "$OPT" in
+      h | help) help
 	 exit;;
-      c) # Add channel
-         CHANNEL=$OPTARG;;
-      d) # device selector
-	 DEVICE=$OPTARG;;
-      w) # Wipe data partition
-	 WIPE=true;;
+      c | channel) # Add channel
+         needs_arg; CHANNEL=$OPTARG;;
+      d | device) # device selector
+	 needs_arg; DEVICE=$OPTARG;;
+      w | wipe) # Wipe data partition
+	 needs_arg; WIPE=true;;
+      b | bootstrap) # Bootstrap device
+	 needs_arg; BOOTSTRAP=true;;
      \?) echo "ERROR: Invalid option!"
+	 help
 	 exit;;
    esac
 done
+shift $((OPTIND-1))
 
 # Device selector
 if [ -z $DEVICE ]; then
@@ -60,7 +70,7 @@ fi
 #########################
 # Exit if no device found
 if [ "$DEVICE" == "" ]; then
-echo "ERROR: No device found or defined!"
+echo -e ${RED}${ENDBOLDCOLOR}"ERROR: No device found or defined!"${NC}
 exit 1
 fi
 
