@@ -1,11 +1,5 @@
 #!/bin/bash
 export TOPDIR=$(pwd)
-# Architecture detection for yq binary
-if [ "$(uname -m)" == "x86_64" ]; then
-export ARCH=amd64
-elif [ "$(uname -m)" == "i686" ]; then
-export ARCH=386
-fi
 #####################################
 help()
 {
@@ -17,6 +11,7 @@ help()
    echo "   -c | --channel         Used to select a channel to install to the device."
    echo "   -d | --device          Used to specify a device. If no device is specificed the tool will try to automatically detect a device."
    echo "   -w | --wipe            Used to wipe the data partition of the device. Used when installing UT for the first time or wiping your user data"
+   echo "   -s | --setup           Used to install the dependencies for the script."
    echo "   -b | --bootstrap       Used to install UT to a device for the first time. If you've installed UT already then don't enable this option"
    echo "   -h | --help            Display this message."
 }
@@ -32,16 +27,7 @@ MAGENTA="$(printf '\033[35m')"  CYAN="$(printf '\033[36m')"  WHITE="$(printf '\0
 # Welcome message
 echo -e ${GREEN}${ENDBOLDCOLOR}"Welcome to UBCLI! A tool to install Ubuntu Touch on your device from the command-line!"${NC}
 
-setup_dependency() {
-if [ ! -x /usr/bin/yq ]; then
-sudo wget https://github.com/mikefarah/yq/releases/download/v4.16.1/yq_linux_$ARCH && sudo chmod 777 /usr/bin/yq
-fi
-[ ! -x /usr/bin/jq ] && sudo apt install jq || :
-[ ! -x /usr/bin/fastboot ] && sudo apt install fastboot || :
-[ ! -x /usr/bin/adb ] && sudo apt install adb || :
-}
-
-while getopts ":hc::d::w:b:-:" OPT; do
+while getopts ":hc::d::w:b:s:-:" OPT; do
   if [ "$OPT" = "-" ]; then
      OPT="${OPTARG%%=*}"
      OPTARG="${OPTARG#$OPT}"
@@ -58,6 +44,8 @@ while getopts ":hc::d::w:b:-:" OPT; do
 	 WIPE=true;;
       b | bootstrap) # Bootstrap device
 	 BOOTSTRAP=true;;
+      s | setup) # Enable setup
+	 bash $TOPDIR/scripts/setup.sh
      \?) echo "ERROR: Invalid option!"
 	 help
 	 exit;;
@@ -98,7 +86,7 @@ echo -e ${BLUE}***********************************************${NC}
 
 reset_color
 
-:
+continue
 
 echo "Do you wish to continue?"
 select yn in "Yes" "No"; do
@@ -107,9 +95,6 @@ select yn in "Yes" "No"; do
         No ) echo "go throw phone in volcano"; exit;;
     esac
 done
-
-# Pull dependency
-setup_dependency
 
 if [ "$BOOTSTRAP" == "true" ]; then
 rm -rf $TOPDIR/bootstrap
