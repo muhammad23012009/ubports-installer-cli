@@ -64,6 +64,11 @@ echo -e ${RED}${ENDBOLDCOLOR}"ERROR: No device found or defined!"${NC}
 exit 1
 fi
 
+# Exit in case of no channel defined.
+if [ ! $CHANNEL ]; then
+echo -e ${RED}${ENDBOLDCOLOR}"ERROR: No channel defined!"${NC}
+exit 1
+fi
 
 CONFIG="$(pwd)/installer-configs/v2/devices/${DEVICE}.yml"
 CFG=$(yq eval -o json $CONFIG 2>/dev/null)
@@ -86,7 +91,7 @@ echo -e ${BLUE}***********************************************${NC}
 
 reset_color
 
-continue
+:
 
 echo "Do you wish to continue?"
 select yn in "Yes" "No"; do
