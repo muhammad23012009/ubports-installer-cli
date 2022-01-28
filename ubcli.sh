@@ -45,7 +45,7 @@ while getopts ":hc::d::w:b:s:-:" OPT; do
       b | bootstrap) # Bootstrap device
 	 BOOTSTRAP=true;;
       s | setup) # Enable setup
-	 bash $TOPDIR/scripts/setup.sh
+	 bash $TOPDIR/scripts/setup.sh;;
      \?) echo "ERROR: Invalid option!"
 	 help
 	 exit;;
@@ -154,6 +154,11 @@ done
 
 # End ubuntu_command
 echo 'unmount system' >> "$OUTPUT/ubuntu_command"
+
+# Clean recovery-cache for installation.
+adb shell rm -rf /cache/recovery
+adb shell mkdir /cache/recovery
+
 # Start installation on device end
 adb push $OUTPUT/* /cache/recovery/*
 adb reboot recovery
