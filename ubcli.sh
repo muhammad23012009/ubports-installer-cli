@@ -4,7 +4,7 @@ export TOPDIR=$(pwd)
 help()
 {
    # Display help
-   echo "The UBCLI script allows for flashing devices from the terminal"
+   echo "The UBCLI script allows for flashing devices from the terminal."
    echo
    echo "Syntax: ubcli.sh [-c|-h|-d|-w|-b]"
    echo "options:"
@@ -27,31 +27,37 @@ MAGENTA="$(printf '\033[35m')"  CYAN="$(printf '\033[36m')"  WHITE="$(printf '\0
 # Welcome message
 echo -e ${GREEN}${ENDBOLDCOLOR}"Welcome to UBCLI! A tool to install Ubuntu Touch on your device from the command-line!"${NC}
 
-while getopts ":hc::d::w:b:s:-:" OPT; do
-  if [ "$OPT" = "-" ]; then
-     OPT="${OPTARG%%=*}"
-     OPTARG="${OPTARG#$OPT}"
-     OPTARG="${OPTARG#=}"
-  fi
-   case "$OPT" in
-      h | help) help
-	 exit;;
-      c | channel) # Add channel
-         CHANNEL=$OPTARG;;
-      d | device) # device selector
-	 DEVICE=$OPTARG;;
-      w | wipe) # Wipe data partition
-	 WIPE=true;;
-      b | bootstrap) # Bootstrap device
-	 BOOTSTRAP=true;;
-      s | setup) # Enable setup
-	 bash $TOPDIR/scripts/setup.sh;;
-     \?) echo "ERROR: Invalid option!"
-	 help
-	 exit;;
-   esac
+while [ "$1" != "" ]; do
+    case $1 in
+    -d | --device)
+        shift
+        DEVICE=$1
+        ;;
+    -c | --channel)
+        shift
+        CHANNEL=$1
+        ;;
+    -h | --help)
+        help
+        exit 0
+        ;;
+    -w | --wipe)
+        WIPE=true
+        ;;
+    -s | --setup)
+        bash $TOPDIR/scripts/setup.sh
+        ;;
+    -b | --bootstrap)
+        BOOTSTRAP=true
+        source $TOPDIR/scripts/bootstrap.sh
+        ;;
+    *)
+        help
+        exit 1
+        ;;
+    esac
+    shift # remove the current value for `$1` and use the next
 done
-shift $((OPTIND-1))
 
 # Device selector
 if [ -z $DEVICE ]; then
@@ -102,11 +108,8 @@ select yn in "Yes" "No"; do
 done
 
 if [ "$BOOTSTRAP" == "true" ]; then
-rm -rf $TOPDIR/bootstrap
-mkdir $TOPDIR/bootstrap
-for link in $(echo $CFG | jq -r '.operating_systems[0].steps[0].actions[0]["core:download"].files[] | .url'); do
-   wget $link -O $TOPDIR/bootstrap/*
-done
+bootstrap
+clean
 fi
 
 URL='https://system-image.ubports.com'
