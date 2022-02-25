@@ -1,61 +1,64 @@
 #!/bin/bash
+TOPDIR=$(pwd)
 
-# Architecture detection for YQ
-if [ "$(uname -m)" == "x86_64" ]; then
-export ARCH=amd64
-elif [ "$(uname -m)" == "amd64" ]; then
-export ARCH=amd64
-elif [ "$(uname -m)" == "i686" ]; then
-export ARCH=386
-elif [ "$(uname -m)" == "aarch64" ]; then
-export ARCH=arm64
+# Check if tools were already installed
+if [ -e $TOPDIR/.tools_setup ]; then
+echo "Tools already setup, re-run the script without the setup argument!"
+exit 0
 fi
-#########################################
 
-# Check for available package managers
+# Architecture detection
+if [ "$(uname -m)" == "x86_64" ]; then
+export ARCH="amd64"
+elif [ "$(uname -m)" == "amd64" ]; then
+export ARCH="amd64"
+elif [ "$(uname -m)" == "i686" ]; then
+export ARCH="i386"
+elif [ "$(uname -m)" == "aarch64" ]; then
+export ARCH="arm64"
+elif [ "$(uname -m)" == "armv7l" ]; then
+export ARCH="armhf"
+fi
+
+# Check for an available package manager.
 if [ -x /usr/bin/apt ]; then
 export PMAN=apt && export INSTALL=install
-elif [ -x /usr/bin/apk ]; then
-export PMAN=apk && export INSTALL=add
 elif [ -x /usr/bin/pacman ]; then
-export PMAN=pacman && export INSTALL=-s
+export PMAN=pacman && export INSTALL="-S"
 elif [ -x /usr/bin/dnf ]; then
 export PMAN=dnf && export INSTALL=install
-fi
-#########################################
-
-echo "The tool will now ask for your sudo password to install necessary dependencies."
-echo
-echo "Do you wish to continue?"
-select yn in "Yes" "No"; do
-     case $yn in
-     Yes ) :; break;;
-     No ) echo "Exiting!"; exit 1;;
-     esac
-done
-
-if [ ! -x /usr/bin/yq ]; then
-sudo wget https://github.com/mikefarah/yq/releases/download/v4.16.1/yq_linux_$ARCH -O /usr/bin/yq
-else
-echo "Dependency already satisfied, yq."
+elif [ -x /usr/bin/yum ]; then
+export PMAN=yum && export INSTALl=install
 fi
 
-if [ ! -x /usr/bin/jq ]; then
-sudo $PMAN $INSTALL jq
-else
-echo "Dependency already satisfied, jq."
+# Check what utilities we have on device.
+if [ ! -x /usr/bin/adb ]; then
+sudo $PMAN $INSTALL adb || echo "Failed to install 'adb' package!" && exit 1
 fi
 
 if [ ! -x /usr/bin/fastboot ]; then
-sudo $PMAN $INSTALL fastboot
-else
-echo "Dependency already satisfied, fastboot."
+sudo $PMAN $INSTALL fastboot || echo "Failed to install 'fastboot' package!" && exit 1
 fi
 
-if [ ! -x /usr/bin/adb ]; then
-sudo $PMAN $INSTALL adb
-else
-echo "Dependency already satisfied, adb."
+# Check for a tool to download setup zip.
+if [ -x /usr/bin/wget ]; then
+export DL_TOOL=wget
+elif [ -x /usr/bin/curl ]; then
+export DL_TOOL=curl
 fi
+
+if [ "$DL_TOOL" == "wget" ]; then
+wget https://github.com/muhammad23012009/ubports-installer-cli/releases/download/v1.0.0/ubcli_tools-$ARCH.tar.xz -O $TOPDIR/tools.tar.xz || echo "Failed to download tools!" && exit 1
+elif [ "$DL_TOOL" == "curl" ]; then
+curl https://github.com/muhammad23012009/ubports-installer-cli/releases/download/v1.0.0/ubcli_tools-$ARCH.tar.xz >> $TOPDIR/tools.tar.xz || echo "Failed to download tools!" && exit 1
+fi
+
+mkdir $TOPDIR/tools
+tar -xvf $TOPDIR/tools.tar.xz -C $TOPDIR/tools || echo "Failed to unpack tools!" && exit 1
+touch $TOPDIR/.tools_setup
+
+echo PATH=$TOPDIR/tools:$PATH >> ~/.bashrc
 
 echo "Setup complete! Run the script without the setup argument now."
+
+exit 0

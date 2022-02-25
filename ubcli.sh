@@ -46,6 +46,7 @@ while [ "$1" != "" ]; do
         ;;
     -s | --setup)
         bash $TOPDIR/scripts/setup.sh
+        exit
         ;;
     -b | --bootstrap)
         BOOTSTRAP=true
