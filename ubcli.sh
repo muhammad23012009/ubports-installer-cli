@@ -1,5 +1,9 @@
 #!/bin/bash
 export TOPDIR=$(pwd)
+
+. $TOPDIR/scripts/setup.sh
+. $TOPDIR/scripts/bootstrap.sh
+. $TOPDIR/scripts/channels.sh
 #####################################
 help()
 {
@@ -35,7 +39,7 @@ while [ "$1" != "" ]; do
         ;;
     -c | --channel)
         shift
-        CHANNEL=$1
+        CHANNEL_NAME=$1
         ;;
     -h | --help)
         help
@@ -45,12 +49,11 @@ while [ "$1" != "" ]; do
         WIPE=true
         ;;
     -s | --setup)
-        bash $TOPDIR/scripts/setup.sh
+        setup
         exit
         ;;
     -b | --bootstrap)
         BOOTSTRAP=true
-        source $TOPDIR/scripts/bootstrap.sh
         ;;
     *)
         help
@@ -72,10 +75,12 @@ exit 1
 fi
 
 # Exit in case of no channel defined.
-if [ ! $CHANNEL ]; then
+if [ ! $CHANNEL_NAME ]; then
 echo -e ${RED}${ENDBOLDCOLOR}"ERROR: No channel defined!"${NC}
 exit 1
 fi
+
+select_device
 
 CONFIG="$(pwd)/installer-configs/v2/devices/${DEVICE}.yml"
 CFG=$(yq eval -o json $CONFIG 2>/dev/null)
@@ -104,7 +109,7 @@ echo "Do you wish to continue?"
 select yn in "Yes" "No"; do
     case $yn in
         Yes ) :; break;;
-        No ) echo "go throw phone in volcano"; exit;;
+        No ) exit;;
     esac
 done
 

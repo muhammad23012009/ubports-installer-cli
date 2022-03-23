@@ -1,6 +1,5 @@
-#!/bin/bash
-TOPDIR=$(pwd)
-
+setup()
+{
 # Check if tools were already installed
 if [ -e $TOPDIR/.tools_setup ]; then
 echo "Tools already setup, re-run the script without the setup argument!"
@@ -33,11 +32,11 @@ fi
 
 # Check what utilities we have on device.
 if [ ! -x /usr/bin/adb ]; then
-sudo $PMAN $INSTALL adb || echo "Failed to install 'adb' package!" && exit 1
+sudo $PMAN $INSTALL adb || exit 1
 fi
 
 if [ ! -x /usr/bin/fastboot ]; then
-sudo $PMAN $INSTALL fastboot || echo "Failed to install 'fastboot' package!" && exit 1
+sudo $PMAN $INSTALL fastboot || exit 1
 fi
 
 # Check for a tool to download setup zip.
@@ -48,13 +47,13 @@ export DL_TOOL=curl
 fi
 
 if [ "$DL_TOOL" == "wget" ]; then
-wget https://github.com/muhammad23012009/ubports-installer-cli/releases/download/v1.0.0/ubcli_tools-$ARCH.tar.xz -O $TOPDIR/tools.tar.xz || echo "Failed to download tools!" && exit 1
+wget https://github.com/muhammad23012009/ubports-installer-cli/releases/download/v1.0.0/ubcli_tools-$ARCH.tar.xz -O $TOPDIR/tools.tar.xz || exit 1
 elif [ "$DL_TOOL" == "curl" ]; then
-curl https://github.com/muhammad23012009/ubports-installer-cli/releases/download/v1.0.0/ubcli_tools-$ARCH.tar.xz >> $TOPDIR/tools.tar.xz || echo "Failed to download tools!" && exit 1
+curl https://github.com/muhammad23012009/ubports-installer-cli/releases/download/v1.0.0/ubcli_tools-$ARCH.tar.xz >> $TOPDIR/tools.tar.xz || exit 1
 fi
 
 mkdir $TOPDIR/tools
-tar -xvf $TOPDIR/tools.tar.xz -C $TOPDIR/tools || echo "Failed to unpack tools!" && exit 1
+tar -xvf $TOPDIR/tools.tar.xz -C $TOPDIR/tools || exit 1
 touch $TOPDIR/.tools_setup
 
 echo PATH=$TOPDIR/tools:$PATH >> ~/.bashrc
@@ -62,3 +61,4 @@ echo PATH=$TOPDIR/tools:$PATH >> ~/.bashrc
 echo "Setup complete! Run the script without the setup argument now."
 
 exit 0
+}
