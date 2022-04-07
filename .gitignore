@@ -1,4 +1,9 @@
 # Ignore the following folders
 
 output
-output/
+tools
+
+# Ignore these files
+channels.json
+tools.tar.xz
+.tools_setup

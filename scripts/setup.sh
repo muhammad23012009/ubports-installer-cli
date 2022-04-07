@@ -58,7 +58,18 @@ touch $TOPDIR/.tools_setup
 
 echo PATH=$TOPDIR/tools:$PATH >> ~/.bashrc
 
-echo "Setup complete! Run the script without the setup argument now."
+echo "Setup complete! Close your terminal and open it again, and run the script without the setup argument now."
 
 exit 0
+}
+
+check_tools()
+{
+if [ -e $TOPDIR/.tools_setup ]; then
+echo "Tools seem to be installed, continuing."
+:
+else
+echo "Tools not installed, please install them by using the '-s' argument."
+exit 1
+fi
 }

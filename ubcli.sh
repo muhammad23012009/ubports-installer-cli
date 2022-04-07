@@ -34,11 +34,11 @@ echo -e ${GREEN}${ENDBOLDCOLOR}"Welcome to UBCLI! A tool to install Ubuntu Touch
 while [ "$1" != "" ]; do
     case $1 in
     -d | --device)
-        shift
+	shift
         DEVICE=$1
         ;;
     -c | --channel)
-        shift
+	shift
         CHANNEL_NAME=$1
         ;;
     -h | --help)
@@ -47,6 +47,7 @@ while [ "$1" != "" ]; do
         ;;
     -w | --wipe)
         WIPE=true
+	shift
         ;;
     -s | --setup)
         setup
@@ -54,6 +55,7 @@ while [ "$1" != "" ]; do
         ;;
     -b | --bootstrap)
         BOOTSTRAP=true
+	shift
         ;;
     *)
         help
@@ -62,6 +64,8 @@ while [ "$1" != "" ]; do
     esac
     shift # remove the current value for `$1` and use the next
 done
+
+check_tools
 
 # Device selector
 if [ -z $DEVICE ]; then
@@ -82,6 +86,7 @@ fi
 
 select_device
 
+ADB_CHECK="$(adb get-state 1>/dev/null 2>&1)"
 CONFIG="$(pwd)/installer-configs/v2/devices/${DEVICE}.yml"
 CFG=$(yq eval -o json $CONFIG 2>/dev/null)
 if [ $? -ne 0 ]; then
@@ -105,13 +110,12 @@ reset_color
 
 :
 
-echo "Do you wish to continue?"
-select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) :; break;;
-        No ) exit;;
-    esac
-done
+read -p "Do you wish to continue? [Y/n] " response
+case $response in
+	y | Y | yes | Yes) :;;
+	n | N | no | No) echo "Exiting"; exit;;
+	*) echo "Invalid option, please choose a correct option."; exit 1;;
+esac
 
 if [ "$BOOTSTRAP" == "true" ]; then
 bootstrap
@@ -169,6 +173,8 @@ done
 # End ubuntu_command
 echo 'unmount system' >> "$OUTPUT/ubuntu_command"
 
+# Check if device is connected.
+if [ $ADB_CHECK ]; then
 # Clean recovery-cache for installation.
 adb shell rm -rf /cache/recovery
 adb shell mkdir /cache/recovery
@@ -176,5 +182,11 @@ adb shell mkdir /cache/recovery
 # Start installation on device end
 adb push $OUTPUT/* /cache/recovery/*
 adb reboot recovery
+
+else
+
+echo "Device not connected, please connect your device and try again!"
+exit 1
+fi
 
 echo ${GREEN}"Installation complete! You can safely unplug your device now."
