@@ -71,6 +71,7 @@ jobs:
 
       - name: Add binaries to release
         uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: ~/packed-bins/*
           fail_on_unmatched_files: true
