@@ -36,6 +36,7 @@ jobs:
             cd ~/jq
             rm -rf jq
             autoreconf -i
+            make clean
             ./configure --with-oniguruma=builtin --build x86_64-pc-linux-gnu --host aarch64-linux-gnu LDFLAGS="-static -pthread"
             make -j2 LDFLAGS=-all-static
             mv jq ~/jq-bins/aarch64/jq
@@ -45,6 +46,7 @@ jobs:
             cd ~/jq
             rm -rf jq
             autoreconf -i
+            make clean
             ./configure --with-oniguruma=builtin --build x86_64-pc-linux-gnu --host arm-linux-gnueabi LDFLAGS="-static -pthread"
             make -j2 LDFLAGS=-all-static
             mv jq ~/jq-bins/armhf/jq
@@ -54,6 +56,7 @@ jobs:
             cd ~/jq
             rm -rf jq
             autoreconf -i
+            make clean
             ./configure --with-oniguruma=builtin --build x86_64-pc-linux-gnu --host i686-pc-linux-gnu LDFLAGS="-static -pthread"
             make -j2 LDFLAGS=-all-static
             mv jq ~/jq-bins/i686/jq
