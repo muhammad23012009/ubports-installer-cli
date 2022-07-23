@@ -69,9 +69,10 @@ jobs:
             tar -cJf ~/packed-bins/ubcli_tools-armhf.tar.xz ~/jq-bins/armhf/jq
             tar -cJf ~/packed-bins/ubcli_tools-i386.tar.xz ~/jq-bins/i686/jq
 
-      - name: Add binaries to release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Automatic Releases
+        uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
-          files: ~/packed-bins/*
-          fail_on_unmatched_files: true
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          files: |
+              ~/packed-bins/*.tar.xz
