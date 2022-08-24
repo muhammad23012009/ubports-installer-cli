@@ -2,6 +2,7 @@
 
 output
 tools
+coverage
 
 # Ignore these files
 channels.json

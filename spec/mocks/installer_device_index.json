@@ -1,0 +1,13 @@
+[
+  {
+    "name": "VollaPhone",
+    "codename": "yggdrasil",
+    "formfactor": "phone",
+    "operating_systems": [
+      "Ubuntu Touch",
+      "Volla OS",
+      "SailfishOS",
+      "Droidian"
+    ]
+  }
+]

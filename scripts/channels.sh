@@ -1,111 +1,65 @@
-select_device()
-{
-# Check for the available channels for the device.
+#!/usr/bin/env sh
 
-URL='https://system-image.ubports.com/channels.json'
+. ./scripts/utils.sh
 
-if [ -x /usr/bin/wget ]; then
-export DL_TOOL=wget
-elif [ -x /usr/bin/curl ]; then
-export DL_TOOL=curl
-fi
+fetch_channels() {
+  channels_url="${UT_CHANNELS_URL}"
+  if [ -z "${channels_url}" ]; then
+    channels_url="https://system-image.ubports.com/channels.json"
+  fi
 
-[ -e $TOPDIR/channels.json ] && :|| $DL_TOOL $URL -O $TOPDIR/channels.json
-CHANNEL_CONFIG=$(cat $TOPDIR/channels.json)
+  fetch "${channels_url}"
+}
 
-android9_devices_stable_arm64="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/arm64/android9/stable"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-android9_devices_devel_arm64="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/arm64/android9/devel"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-android9_devices_rc_arm64="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/arm64/android9/rc"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
+get_device_channels() {
+  device="${1}"
+  os="${2}"
 
-hybris_devices_devel_arm64="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/arm64/hybris/devel"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-hybris_devices_rc_arm64="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/arm64/hybris/rc"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-hybris_devices_stable_arm64="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/arm64/hybris/stable"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
+  channel_config=$(fetch_channels)
+  channels="$(echo "${channel_config}" | jq -r 'keys[]')"
 
-hybris_devices_devel_armhf="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/armhf/hybris/devel"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-hybris_devices_rc_armhf="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/armhf/hybris/rc"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-hybris_devices_stable_armhf="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/armhf/hybris/stable"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
+  echo "${channels}" | while read -r channels_item; do
+    if [ -n "${os}" ]; then
+      if ! contains "${channels_item}" "${os}"; then
+        continue
+      fi
+    fi
 
-hybris_devices_hal_devel="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/armhf/hybris/halium-devel"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-legacy_devices_devel="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/devel"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
-legacy_devices_rc="$(echo $CHANNEL_CONFIG | jq -r '.["16.04/rc"] | .devices' | cut -d ':' -f1 | cut -d '{' -f1 | cut -d '}' -f1 | awk -F 'index' '{print $1}' | tr -d '"')"
+    ret=$(echo "${channel_config}" | jq -r ".[\"${channels_item}\"].devices.${device}.index")
 
-if [ "$CHANNEL_NAME" == "stable" ]; then
-    for devices in $android9_devices_stable_arm64; do
-        if [ "$DEVICE" == "$devices" ]; then
-            export CHANNEL=16.04/arm64/android9/$CHANNEL_NAME
-        fi
-    done
+    if [ "${ret}" != 'null' ]; then
+      echo "- ${channels_item}"
+    fi
+  done
+}
 
-    for devices in $hybris_devices_stable_arm64; do
-        if [ "$DEVICE" == "$devices" ]; then
-            export CHANNEL=16.04/arm64/hybris/$CHANNEL_NAME
-        fi
-    done
+select_device() {
+  device="${1}"
+  channel="${2}"
+  os="${3}"
 
-    for devices in $hybris_devices_stable_armhf; do
-        if [ "$DEVICE" == "$devices" ]; then
-            export CHANNEL=16.04/armhf/hybris/$CHANNEL_NAME
-        fi
-    done
-fi
+  channel_config=$(fetch_channels)
 
-if [ "$CHANNEL_NAME" == "devel" ]; then
-	for devices in $android9_devices_devel_arm64; do
-        	if [ "$DEVICE" == "$devices" ]; then
-            		export CHANNEL=16.04/arm64/android9/$CHANNEL_NAME
-        	fi
-    	done
+  # no os specified - assume full channel
+  if [ -z "$os" ]; then
+    echo "${channel_config}" | jq -r ".[\"${channel}\"].devices.${device}.index"
+  fi
 
-    	for devices in $hybris_devices_devel_arm64; do
-        	if [ "$DEVICE" == "$devices" ]; then
-            		export CHANNEL=16.04/arm64/hybris/$CHANNEL_NAME
-        	fi
-    	done
+  channels="$(echo "${channel_config}" | jq -r 'keys[]')"
 
-     	for devices in $hybris_devices_devel_armhf; do
-        	if [ "$DEVICE" == "$devices" ]; then
-            		export CHANNEL=16.04/armhf/hybris/$CHANNEL_NAME
-        	fi
-    	done
+  echo "${channels}" | while read -r channels_item; do
+    if ! contains "${channels_item}" "${channel}"; then
+      continue
+    fi
 
-	for devices in $legacy_devices_devel; do
-		if [ "$DEVICE" == "$devices" ]; then
-			export CHANNEL=16.04/devel
-		fi
-	done
-fi
+    if ! contains "${channels_item}" "${os}"; then
+      continue
+    fi
 
-if [ "$CHANNEL_NAME" == "rc" ]; then
-	for devices in $android9_devices_rc_arm64; do
-		if [ "$DEVICE" == "$devices" ]; then
-			export CHANNEL=16.04/arm64/android9/$CHANNEL_NAME
-		fi
-	done
+    ret=$(echo "${channel_config}" | jq -r ".[\"${channels_item}\"].devices.${device}.index")
 
-     	for devices in $hybris_devices_rc_arm64; do
-        	if [ "$DEVICE" == "$devices" ]; then
-            		export CHANNEL=16.04/arm64/hybris/$CHANNEL_NAME
-        	fi
-    	done
-
-    	for devices in $hybris_devices_rc_armhf; do
-        	if [ "$DEVICE" == "$devices" ]; then
-            		export CHANNEL=16.04/armhf/hybris/$CHANNEL_NAME
-        	fi
-    	done
-
-    	for devices in $legacy_devices_rc; do
-		if [ "$DEVICE" == "$devices" ]; then
-	    		export CHANNEL=16.04/rc
-    		fi
-    	done
-fi
-
-if [ "$CHANNEL_NAME" == "halium-devel" ]; then
-	for devices in $hybris_devices_hal_devel; do
-		if [ "$DEVICE" == "$devices" ]; then
-			export CHANNEL=16.04/armhf/hybris/halium-devel
-		fi
-	done
-fi
+    if [ "${ret}" != 'null' ]; then
+      echo "${ret}"
+    fi
+  done
 }
