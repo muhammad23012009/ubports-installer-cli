@@ -4,8 +4,9 @@
 . ./scripts/setup.sh
 . ./scripts/bootstrap.sh
 . ./scripts/channels.sh
+. ./scripts/download.sh
 
-helpp() {
+help() {
   # display help
   echo "The UBCLI script allows for flashing devices from the terminal."
   echo
@@ -18,6 +19,7 @@ helpp() {
   echo "   -s | --setup           Used to install the dependencies for the script."
   echo "   -b | --bootstrap       Used to install UT to a device for the first time. If you've installed UT already then don't enable this option"
   echo "   -lc | --list-channels  List available channels for device."
+  echo "   -V | --verbose	  Be verbose about the tool performing any actions."
   echo "   -h | --help            Display this message."
 }
 
@@ -64,7 +66,7 @@ while [ "${1}" != "" ]; do
       shift
       bootstrap=true
       ;;
-    --version)
+    -v | --version)
       shift
       version=${1}
       shift
@@ -72,6 +74,10 @@ while [ "${1}" != "" ]; do
     -lc | --list-channels)
       shift
       get_channels=true
+      ;;
+    -V | --verbose)
+      shift
+      set -xe
       ;;
     *)
       help
@@ -86,7 +92,7 @@ fi
 
 # exit if no device found
 if [ "${device}" = "" ]; then
-  printf "$(ct 'red' true)ERROR:$(ct 'red') No device specified and no device connected!$(ct)"
+  printf "$(ct 'red' true)ERROR:$(ct 'red') No device specified and no device connected!\n$(ct)"
   exit 1
 fi
 
@@ -107,14 +113,14 @@ if [ "${get_channels}" = true ]; then
   printf "$(ct 'green')Available channels for"
   printf "$(ct 'orange') ${device}$(ct 'green') on"
   printf "$(ct 'orange') ${version}$(ct 'green'):\n"
-  
+
   printf "$(ct)${channels}\n"
   exit 0
 fi
 
 # exit if channel not specified
 if [ "${channel}" = "" ]; then
-  printf "$(ct 'red' true)ERROR:$(ct 'red') No channel specified!$(ct)"
+  printf "$(ct 'red' true)ERROR:$(ct 'red') No channel specified!\n$(ct)"
   exit 2
 fi
 
@@ -137,7 +143,9 @@ if [ -z "${image_index_url}" ]; then
     printf "$(ct 'red') on$(ct 'orange') ${version}"
   fi
   printf "$(ct 'red') does not exist!$(ct)\n"
-  
+
   echo 'Run with --list-channels to list available channels'
   exit 3
 fi
+
+fetch_and_download_latest_images "${image_index_url}"

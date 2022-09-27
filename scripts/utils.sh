@@ -2,11 +2,18 @@
 
 [ -n "${UTILS_SH}" ] && return; UTILS_SH=0; # like #ifndef guard in C
 
+URL=https://system-image.ubports.com
+
 cache_home="${XDG_CACHE_HOME}"
+data_home="${XDG_DATA_HOME}"
 if [ -z "${cache_home}" ]; then
   cache_home="${HOME}/.cache"
 fi
+if [ -z "${data_home}" ]; then
+  data_home="${HOME}/.local"
+fi
 cache_dir="${cache_home}/ubports-installer-cli"
+data_dir="${data_home}/ubports-installer-cli"
 
 fetch() {
   url=${1}
@@ -32,8 +39,24 @@ fetch() {
     mkdir -p "$(dirname "${cached}")"
     echo "${result}" > "${cached}"
   fi
-  
+
   echo "${result}"
+}
+
+fetch_persistent_files() {
+  url=${1}
+  if [ -z ${2} ]; then
+    cached="${data_dir}/${url}"
+  else
+    cached=${2}
+  fi
+
+  if command -v wget > /dev/null 2>&1; then
+    output=$(wget "${url}" -O "${cached}")
+  elif command -v curl > /dev/null 2>&1; then
+    output=$(curl "${url}" -o "${cached}")
+  fi
+
 }
 
 # https://stackoverflow.com/a/8811800
