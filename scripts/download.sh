@@ -19,9 +19,9 @@ fetch_and_download_latest_images() {
 }
 
 create_inital_ubuntu_command() {
-   echo format system \
-	[ -z "${wipe:+true}" ] && format data \
-	load_keyring image-master.tar.xz image-master.tar.xz.asc \
-	load_keyring image-signing.tar.xz image-signing.tar.xz.asc \
-	mount system > "${install_dir}/ubuntu_command"
+echo "format system
+$( [ -z ${wipe:+true} ] || echo "format data")
+load_keyring image-master.tar.xz image-master.tar.xz.asc
+load_keyring image-signing.tar.xz image-signing.tar.xz.asc
+mount system" > "${install_dir}/ubuntu_command"
 }
