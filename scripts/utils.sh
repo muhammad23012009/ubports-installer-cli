@@ -2,7 +2,7 @@
 
 [ -n "${UTILS_SH}" ] && return; UTILS_SH=0; # like #ifndef guard in C
 
-URL=https://system-image.ubports.com
+URL="https://system-image.ubports.com"
 
 cache_home="${XDG_CACHE_HOME}"
 data_home="${XDG_DATA_HOME}"
@@ -17,7 +17,7 @@ data_dir="${data_home}/ubports-installer-cli"
 
 fetch() {
   url=${1}
-  cached="${cache_dir}/${url}"
+  cached="${cache_dir}/$(basename "${url}")"
 
   if [ -z "${NO_CACHE}" ]; then
     if [ -e "${cached}" ]; then

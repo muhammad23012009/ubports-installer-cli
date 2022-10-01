@@ -148,4 +148,11 @@ if [ -z "${image_index_url}" ]; then
   exit 3
 fi
 
-fetch_and_download_latest_images "${image_index_url}"
+latest_images=$(fetch_latest_images "${image_index_url}")
+if [ -z "${latest_images}" ]; then
+   printf "$(ct 'red' true)ERROR:$(ct 'red') images for device"
+   printf "$(ct 'orange') ${device}$(ct 'red') on channel"
+   printf "$(ct 'orange') ${channel}$(ct 'red') not found!$(ct)\n"
+fi
+
+download_latest_images "${image_index_url}"
