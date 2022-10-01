@@ -5,7 +5,7 @@
 install_dir="${data_dir}/installation_files"
 
 fetch_latest_images() {
-   index_url=${1}
+   index_url="${1}"
    latest_images="$(fetch "${URL}""${index_url}" | jq '.images |  map(select(.type == "full")) | sort_by(.version) | .[-1]'))"
    downloadable_files="$(echo "${latest_images}" | jq -r '.files[].path')"
 
@@ -16,7 +16,7 @@ fetch_latest_images() {
 }
 
 download_latest_images() {
-   index_url=${1}
+   index_url="${1}"
    images=$(fetch_latest_images "${index_url}")
 
    for files in "${images}"; do
@@ -34,7 +34,7 @@ mount system" > "${install_dir}/ubuntu_command"
 }
 
 fill_ubuntu_command() {
-   index_url=${1}
+   index_url="${1}"
    ubuntu_command_file="${install_dir}/ubuntu_command"
    images=$(fetch_latest_images "${index_url}")
 
